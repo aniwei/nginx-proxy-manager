@@ -37,7 +37,7 @@ function fetch(verb, path, data, options) {
     options = options || {};
 
     return new Promise(function (resolve, reject) {
-        let api_url = '/api/';
+        let api_url = './api/';
         let url     = api_url + path;
         let token   = Tokens.getTopToken();
 
