@@ -4,7 +4,6 @@
 node_modules
 core*
 config/development.json
-dist
 webpack_stats.html
 data/*
 yarn-error.log
