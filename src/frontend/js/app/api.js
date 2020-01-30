@@ -131,7 +131,7 @@ function FileUpload(path, fd) {
         let xhr   = new XMLHttpRequest();
         let token = Tokens.getTopToken();
 
-        xhr.open('POST', '/api/' + path);
+        xhr.open('POST', './api/' + path);
         xhr.overrideMimeType('text/plain');
         xhr.setRequestHeader('Authorization', 'Bearer ' + (token ? token.t : null));
         xhr.send(fd);
