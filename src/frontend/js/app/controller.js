@@ -96,7 +96,7 @@ module.exports = {
         let controller = this;
 
         require(['./main', './dashboard/main'], (App, View) => {
-            controller.navigate('/');
+            controller.navigate('./');
             App.UI.showAppContent(new View());
         });
     },
