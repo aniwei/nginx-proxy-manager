@@ -62,7 +62,7 @@ app.use(require('./lib/express/jwt')());
 /**
  * Routes
  */
-app.use(express.static('dist'));
+// app.use(express.static('dist'));
 app.use('/api', require('./routes/api/main'));
 app.use('/', require('./routes/main'));
 

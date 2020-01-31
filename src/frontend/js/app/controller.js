@@ -19,7 +19,7 @@ module.exports = {
      * Login
      */
     showLogin: function () {
-        window.location = './login';
+        window.location = '/login';
     },
 
     /**
@@ -96,7 +96,7 @@ module.exports = {
         let controller = this;
 
         require(['./main', './dashboard/main'], (App, View) => {
-            controller.navigate('./');
+            controller.navigate('/');
             App.UI.showAppContent(new View());
         });
     },
