@@ -29,16 +29,25 @@ const internalUser = {
             data.is_disabled = data.is_disabled ? 1 : 0;
         }
 
-        return access.can('users:create', data)
-            .then(() => {
-                data.avatar = gravatar.url(data.email, {default: 'mm'});
+        const promise = access ? 
+            access.can('users:create', data)
+                .then(() => {
+                    data.avatar = gravatar.url(data.email, {default: 'mm'});
 
-                return userModel
-                    .query()
-                    .omit(omissions())
-                    .insertAndFetch(data);
-            })
-            .then(user => {
+                    return userModel
+                        .query()
+                        .omit(omissions())
+                        .insertAndFetch(data);
+                })
+            : userModel
+                .query()
+                .omit(omissions())
+                .insertAndFetch(data)
+                .then(user => {
+                    return user;
+                });
+
+        return promise.then(user => {
                 if (auth) {
                     return authModel
                         .query()

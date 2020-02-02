@@ -1,11 +1,96 @@
 const _          = require('lodash');
+const authentication  = require('ldap-authentication');
 const error      = require('../lib/error');
 const userModel  = require('../models/user');
 const authModel  = require('../models/auth');
 const helpers    = require('../lib/helpers');
 const TokenModel = require('../models/token');
+const internalUser = require('./user');
+
+const env = process.env;
+const options = {
+    ldapOptions: {
+        url: env.LDAP_URL,
+    },
+    adminDn: env.LDAP_ADMIN_DN,
+    adminPassword: env.LDAP_ADMIN_PASSWORD,
+    userSearchBase: env.LDAP_BASE_DN,
+    usernameAttribute: env.LDAP_USERNAME_ATTR,
+}
 
 module.exports = {
+    getTokenFromLDAP: (data, issuer) => {
+        let Token = new TokenModel();
+
+        data.scope  = data.scope || 'user';
+        data.expiry = data.expiry || '30d';
+
+        
+        const promise = authenticate({
+            ...options,
+            username: data.identity,
+            userPassword: data.secret
+        });
+
+        return promise.then(auth => {
+            return userModel
+                .where('username', data.identity)
+                .andWhere('is_deleted', 0)
+                .andWhere('is_disabled', 0)
+                .first()
+                .then(user => {
+                    return user ? user 
+                        : internalUser.create(null, {
+                            roles: ['admin'],
+                            username: data.identity
+                        });
+                })
+                .then(user => {
+                    if (user) {
+                        // Get auth
+                        return authModel
+                            .query()
+                            .where('user_id', '=', user.id)
+                            .first()
+                            .then(auth => {
+                                if (auth) {
+                                    if (data.scope !== 'user' && _.indexOf(user.roles, data.scope) === -1) {
+                                        // The scope requested doesn't exist as a role against the user,
+                                        // you shall not pass.
+                                        throw new error.AuthError('Invalid scope: ' + data.scope);
+                                    }
+
+                                    // Create a moment of the expiry expression
+                                    let expiry = helpers.parseDatePeriod(data.expiry);
+                                    if (expiry === null) {
+                                        throw new error.AuthError('Invalid expiry time: ' + data.expiry);
+                                    }
+
+                                    return Token.create({
+                                            iss:   issuer || 'api',
+                                            attrs: {
+                                                id: u.id
+                                            },
+                                            scope: [data.scope]
+                                        }, {
+                                            expiresIn: expiry.unix()
+                                        })
+                                        .then(signed => {
+                                            return {
+                                                token:   signed.token,
+                                                expires: expiry.toISOString()
+                                            };
+                                        });
+                                } else {
+                                    throw new error.AuthError('No password auth for user');
+                                }
+                            });
+                    } else {
+                        throw new error.AuthError('No relevant user found');
+                    }
+                })
+        });
+    },
 
     /**
      * @param   {Object} data

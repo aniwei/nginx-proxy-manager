@@ -42,7 +42,8 @@ router
     .post((req, res, next) => {
         apiValidator({$ref: 'endpoints/tokens#/links/0/schema'}, req.body)
             .then(payload => {
-                return internalToken.getTokenFromEmail(payload);
+                return internalToken.getTokenFromLDAP(payload);
+                // return internalToken.getTokenFromEmail(payload);
             })
             .then(data => {
                 res.status(200)
